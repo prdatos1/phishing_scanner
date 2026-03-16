@@ -1,0 +1,179 @@
+============================================================
+  ESCÁNER ANTIPHISHING — INSTRUCCIONES COMPLETAS
+============================================================
+
+REQUISITOS PREVIOS (solo necesarios en el PC donde se COMPILA)
+──────────────────────────────────────────────────────────────
+  • Windows 10/11 (64 bits)
+  • Python 3.10 o superior  →  https://python.org/downloads
+    IMPORTANTE: durante la instalacion marca "Add Python to PATH"
+  • Microsoft Outlook instalado y configurado con tus cuentas
+  • El .exe resultante NO necesita Python en el PC destino
+
+
+═══════════════════════════════════════════════════════════════
+  PASO 1 — COMPILAR EL EJECUTABLE (solo una vez, en tu PC)
+═══════════════════════════════════════════════════════════════
+
+1. Asegúrate de tener estos ficheros en la misma carpeta:
+
+     phishing_scanner.py
+     excepciones_spoofing.xlsx
+     compilar.bat
+
+2. Haz doble clic en  compilar.bat
+
+   El script instalará todas las dependencias automáticamente:
+     • pywin32     (conexión con Outlook)
+     • pymupdf     (análisis estructural de PDFs)
+     • pypdf       (inspección de objetos PDF)
+     • openpyxl    (lectura del Excel de excepciones)
+     • colorama    (colores en consola)
+     • pyinstaller (compilador a .exe)
+
+3. Cuando termine verás:
+     COMPILACION COMPLETADA
+     Carpeta lista para distribuir: dist\phishing_scanner\
+
+
+═══════════════════════════════════════════════════════════════
+  PASO 2 — INSTALAR EN EL PC DESTINO
+═══════════════════════════════════════════════════════════════
+
+1. Copia la carpeta completa  dist\phishing_scanner\  al PC destino.
+   Puedes renombrar la carpeta como quieras, por ejemplo:
+
+     C:\Herramientas\AntiPhishing\
+
+2. Estructura que debe quedar en esa carpeta:
+
+     AntiPhishing\
+     ├── phishing_scanner.exe       ← ejecutable principal
+     ├── excepciones_spoofing.xlsx  ← lista blanca de dominios
+     ├── INSTRUCCIONES.txt          ← este fichero
+     └── (resto de archivos .dll y carpetas generados por PyInstaller)
+
+   El programa creará automáticamente en esa misma carpeta:
+     ├── phishing_scan.log          ← log completo de cada sesión
+     └── phish_temp\                ← carpeta temporal (se borra al cerrar)
+
+3. REQUISITO EN EL PC DESTINO:
+   • Microsoft Outlook instalado y abierto con las cuentas configuradas
+   • NO necesita Python instalado
+   • NO necesita ninguna librería adicional
+
+
+═══════════════════════════════════════════════════════════════
+  PASO 3 — USO
+═══════════════════════════════════════════════════════════════
+
+1. Abre Outlook y espera a que cargue la bandeja de entrada
+2. Haz doble clic en  phishing_scanner.exe
+3. Se abre una ventana de consola negra con el escaneo en curso
+
+  Lo que verás en pantalla:
+  ─────────────────────────────────────────────────────────────
+  [    1] 15/03/2026 10:22 | Factura de enero
+           De: facturacion@empresa.com
+           ✓ Limpio (3 puntos)
+
+  [    2] 14/03/2026 18:41 | URGENTE ⚠ verifica tu cuenta
+           De: soporte@dominioraro.xyz
+           Palabras de urgencia: urgente (+5)
+           Dominio de remitente raro: dominioraro.xyz (+6)
+           ★ SOSPECHOSO (11 puntos)
+           → Bandera roja de seguimiento activada
+           → Asunto prefijado: [⚠ SOSPECHOSO 11pts]
+  ─────────────────────────────────────────────────────────────
+
+4. El escáner arranca desde el correo más reciente y se detiene
+   en el primer correo que ya tenga la categoría "Revisado-AntiPhish",
+   así que en ejecuciones sucesivas solo procesa los correos nuevos.
+
+5. Al terminar pulsa Enter para cerrar la ventana.
+
+
+═══════════════════════════════════════════════════════════════
+  GESTIÓN DE LA LISTA BLANCA (excepciones_spoofing.xlsx)
+═══════════════════════════════════════════════════════════════
+
+Abre  excepciones_spoofing.xlsx  con Excel para añadir excepciones.
+
+Columnas:
+  A — dominio_from        Dominio que aparece en el From del correo
+                          Ejemplo: oga.ai
+  B — servidor_permitido  Servidor desde el que realmente lo envían
+                          Ejemplo: outlook.com
+  C — motivo              Nota tuya (no la lee el programa)
+  D — comprobacion        Qué alertas ignorar para este par:
+                            received   → servidor Received ≠ From
+                            dkim       → DKIM fallido/ausente
+                            spf        → SPF fallido
+                            dmarc      → DMARC fallido
+                            reply-to   → Reply-To distinto
+                            return-path→ Return-Path distinto
+                            todas      → ignorar todo lo anterior
+                          Puedes combinar: "received, dkim"
+  E — añadido_por         Tu nombre o el del equipo
+  F — fecha               Fecha de alta (YYYY-MM-DD)
+
+EJEMPLO para oga.ai (usa Microsoft 365):
+  A: oga.ai
+  B: outlook.com
+  C: Usa Microsoft 365 / Exchange Online
+  D: todas
+  E: admin
+  F: 2026-03-16
+
+
+═══════════════════════════════════════════════════════════════
+  SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════
+
+  Error: "No se pudo conectar con Outlook"
+  → Asegúrate de que Outlook esté abierto antes de ejecutar el escáner
+
+  Error: "excepciones_spoofing.xlsx no encontrado"
+  → El Excel debe estar en la misma carpeta que el .exe
+
+  El escáner no procesa nada (0 correos)
+  → Puede que todos los correos ya tengan la categoría Revisado-AntiPhish
+  → En Outlook: selecciona todos los correos → clic derecho → Categorizar
+    → Borrar todas las categorías → vuelve a ejecutar
+
+  Falsos positivos (correos legítimos marcados como sospechosos)
+  → Añade el dominio del remitente al Excel de excepciones
+  → Baja el UMBRAL en la configuración del script (línea: UMBRAL = 9)
+    y recompila, o contacta con quien mantiene el escáner
+
+  Los cambios en el Excel no se aplican
+  → Cierra el Excel antes de ejecutar el escáner
+  → Asegúrate de guardar los cambios en el Excel
+
+
+═══════════════════════════════════════════════════════════════
+  PUNTUACIÓN DE REFERENCIA
+═══════════════════════════════════════════════════════════════
+
+  Alerta se activa con > 9 puntos. Referencia de pesos:
+
+  +15  Servidor Received no coincide con dominio From (spoofing)
+  +15  Extensión .pdf pero el fichero es un ejecutable PE
+  +15  Ejecutable PE incrustado dentro de un fichero
+  +12  SPF o DMARC fallido
+  +12  Extensión camuflada (magic bytes distintos a la extensión)
+  +12  Adjunto bloqueado por el antivirus
+  +10  JavaScript detectado en PDF
+  +10  DKIM fallido o ausente
+  +10  Extensión ejecutable (.exe, .bat, .ps1...)
+  +10  Doble extensión (factura.pdf.exe)
+  + 8  Emojis de urgencia en el asunto
+  + 8  Enlace engañoso (texto visible ≠ destino real)
+  + 8  URL con IP directa en el cuerpo
+  + 8  Suplantación de marca conocida (PayPal, BBVA, etc.)
+  + 7  Archivo comprimido adjunto (.zip, .rar...)
+  + 5  Palabras de urgencia en el texto
+  + 5  URL con dominio de alto riesgo (.xyz, .tk, .ml...)
+  + 2  Correo con enlace (señal suave)
+
+============================================================
